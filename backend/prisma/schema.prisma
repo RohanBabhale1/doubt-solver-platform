@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  password      String
+  bio           String?
+  avatarUrl     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  doubts        Doubt[]
+  replies       Reply[]
+  votes         Vote[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Subject {
+  id        String  @id @default(uuid())
+  name      String  @unique
+  iconEmoji String  @default("📚")
+  colorHex  String  @default("#1DBF73")
+  doubts    Doubt[]
+
+  @@map("subjects")
+}
+
+model Doubt {
+  id        String   @id @default(uuid())
+  title     String
+  body      String
+  imageUrl  String?
+  isSolved  Boolean  @default(false)
+  viewCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  subjectId String
+  replies   Reply[]
+
+  @@index([subjectId])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+  @@map("doubts")
+}
+
+model Reply {
+  id         String   @id @default(uuid())
+  body       String
+  isAccepted Boolean  @default(false)
+  voteCount  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  doubt    Doubt  @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+  doubtId  String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  votes    Vote[]
+
+  @@index([doubtId])
+  @@map("replies")
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  reply   Reply  @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  replyId String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+
+  @@unique([replyId, userId])
+  @@map("votes")
+}
+
+model Notification {
+  id            String           @id @default(uuid())
+  message       String
+  isRead        Boolean          @default(false)
+  type          NotificationType
+  referenceId   String?
+  referenceType String?
+  createdAt     DateTime         @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  REPLY_RECEIVED
+  VOTE_RECEIVED
+  ANSWER_ACCEPTED
+  NEW_DOUBT_IN_SUBJECT
+}
