@@ -17,14 +17,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
-// app.use('/api/auth', require('./routes/authRoutes'));
-// app.use('/api/doubts', require('./routes/doubtRoutes'));
-// app.use('/api/replies', require('./routes/replyRoutes'));
-// app.use('/api/votes', require('./routes/voteRoutes'));
-// app.use('/api/notifications', require('./routes/notificationRoutes'));
-// app.use('/api/subjects', require('./routes/subjectRoutes'));
-// app.use('/api/search', require('./routes/searchRoutes'));
-// app.use('/api/profile', require('./routes/profileRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/doubts', require('./routes/doubtRoutes'));
+app.use('/api/replies', require('./routes/replyRoutes'));
+app.use('/api/votes', require('./routes/voteRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/subjects', require('./routes/subjectRoutes'));
+app.use('/api/search', require('./routes/searchRoutes'));
+app.use('/api/profile', require('./routes/profileRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date().toISOString() }));
