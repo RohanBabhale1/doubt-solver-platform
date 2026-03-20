@@ -74,7 +74,7 @@ exports.getDoubts = async (req, res, next) => {
     if (sort === 'unsolved') where.isSolved = false;
 
     let orderBy;
-    if (sort === 'popular') orderBy = { voteCount: 'desc' };
+    if (sort === 'popular') orderBy = { replies: { _count: 'desc' } };
     else orderBy = { createdAt: 'desc' };
 
     const [doubts, total] = await Promise.all([
