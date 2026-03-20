@@ -127,12 +127,11 @@ const DoubtDetail = () => {
     }
   };
 
-  if (loading)
-    return (
-      <div className="page-loading">
-        <Spinner text="Loading doubt..." />
-      </div>
-    );
+  if (loading) return (
+    <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Spinner text="Loading doubt..." />
+    </div>
+  );
   if (error)
     return (
       <div
