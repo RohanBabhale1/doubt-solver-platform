@@ -297,3 +297,8 @@ select.form-input { cursor: pointer; }
   .container { padding: 0 16px; }
   .section-title { font-size: 24px; }
 }
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}

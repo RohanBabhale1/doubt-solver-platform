@@ -15,7 +15,7 @@ const SORT_TABS = [
 ];
 
 const DoubtList = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [doubts, setDoubts] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ const DoubtList = () => {
         setDoubts(res.data.doubts);
         setTotal(res.data.total);
       }
-    } catch (err) {
+    } catch {
       setDoubts([]);
       setFetchError('Failed to load doubts. Please check your connection.');
     } finally {
