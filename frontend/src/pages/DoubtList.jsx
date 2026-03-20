@@ -20,6 +20,7 @@ const DoubtList = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [fetchError, setFetchError] = useState('');
   const [sort, setSort] = useState("newest");
   const [activeSubjectId, setActiveSubjectId] = useState(
     searchParams.get("subjectId") || null,
@@ -32,6 +33,7 @@ const DoubtList = () => {
 
   const fetchDoubts = useCallback(async () => {
     setLoading(true);
+    setFetchError('');
     try {
       let res;
       if (searchQuery) {
@@ -48,8 +50,9 @@ const DoubtList = () => {
         setDoubts(res.data.doubts);
         setTotal(res.data.total);
       }
-    } catch (_) {
+    } catch (err) {
       setDoubts([]);
+      setFetchError('Failed to load doubts. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -157,6 +160,13 @@ const DoubtList = () => {
           onSearch={handleSearch}
         />
       </div>
+
+      {/* ── Error state ── */}
+      {fetchError && (
+        <div className="alert alert-error" style={{ marginBottom: 20 }}>
+          {fetchError}
+        </div>
+      )}
 
       {loading ? (
         <Spinner text="Loading doubts..." />
