@@ -1,4 +1,4 @@
-# DoubSolve — Real-Time Academic Doubt Solving Platform
+# DoubtSolve — Real-Time Academic Doubt Solving Platform
 
 A full-stack university capstone project that enables students to post academic doubts and receive real-time answers from peers. Built with a modern microservices-inspired architecture using WebSockets, event streaming, and in-memory caching.
 
