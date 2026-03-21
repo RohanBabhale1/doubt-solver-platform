@@ -4,6 +4,7 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
+RUN apk add --no-cache openssl
 # Copy package files first (layer caching — npm install only re-runs if
 # package.json or package-lock.json actually changes)
 COPY package*.json ./
@@ -26,3 +27,5 @@ EXPOSE 5000
 
 # Start the application
 CMD ["node", "server.js"]
+
+RUN apk add --no-cache openssl curl
