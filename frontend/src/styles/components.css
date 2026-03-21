@@ -1462,25 +1462,3 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-```
-
----
-
-## `frontend/src/main.jsx`
-
-```jsx
-// frontend/src/main.jsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import App from './App';
-import './styles/global.css';
-import './styles/components.css';
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
