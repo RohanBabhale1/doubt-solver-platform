@@ -1,11 +1,15 @@
-version: '3.8'
+networks:
+  doubt_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploads_data:
 
 services:
 
-  # ── 1. PostgreSQL ─────────────────────────────────────────────────
   postgres:
-    image: postgres:15
-    platform: linux/amd64
+    image: postgres:15-alpine
     container_name: doubt_postgres
     environment:
       POSTGRES_USER: student
@@ -15,27 +19,29 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - doubt_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U student"]
+      test: ["CMD-SHELL", "pg_isready -U student -d doubtsolverdb"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
-  # ── 2. Redis ──────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: doubt_redis
     ports:
       - "6379:6379"
+    networks:
+      - doubt_network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
     restart: unless-stopped
 
-  # ── 3. Zookeeper (required by Kafka) ──────────────────────────────
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     container_name: doubt_zookeeper
@@ -44,9 +50,10 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    networks:
+      - doubt_network
     restart: unless-stopped
 
-  # ── 4. Kafka ──────────────────────────────────────────────────────
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     container_name: doubt_kafka
@@ -54,21 +61,24 @@ services:
       - zookeeper
     ports:
       - "9092:9092"
-      - "29092:29092"
+      - "9093:9093"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # PLAINTEXT     → used by backend container (Docker internal network)
-      # PLAINTEXT_HOST → used by host machine tools (e.g. Kafka UI, local testing)
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - doubt_network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
 
-  # ── 5. Backend (Node.js) ──────────────────────────────────────────
   backend:
     build:
       context: ./backend
@@ -85,37 +95,36 @@ services:
       - "5000:5000"
     environment:
       DATABASE_URL: postgresql://student:password123@postgres:5432/doubtsolverdb
-      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       KAFKA_BROKER: kafka:9092
-      JWT_SECRET: super_secret_jwt_key_change_this_in_production_min32chars
+      JWT_SECRET: change_this_to_a_long_random_secret_minimum_32_chars
       PORT: 5000
       NODE_ENV: production
       FRONTEND_URL: http://localhost:3000
     volumes:
-      # Mount uploads directory so images persist across container restarts
-      - ./backend/uploads:/app/uploads
+      - uploads_data:/app/uploads
+    networks:
+      - doubt_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
     restart: unless-stopped
 
-  # ── 6. Frontend (React via Nginx) ─────────────────────────────────
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5000/api
+        VITE_SOCKET_URL: http://localhost:5000
     container_name: doubt_frontend
-    depends_on:
-      backend:
-        condition: service_healthy
     ports:
       - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - doubt_network
     restart: unless-stopped
-
-# ── Named Volumes ────────────────────────────────────────────────────
-volumes:
-  postgres_data:
-    driver: local
