@@ -7,7 +7,6 @@ volumes:
   uploads_data:
 
 services:
-
   postgres:
     image: postgres:15-alpine
     container_name: doubt_postgres
@@ -26,7 +25,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: "no"
 
   redis:
     image: redis:7-alpine
@@ -40,7 +39,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: "no"
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
@@ -52,7 +51,7 @@ services:
       - "2181:2181"
     networks:
       - doubt_network
-    restart: unless-stopped
+    restart: "no"
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -72,11 +71,18 @@ services:
     networks:
       - doubt_network
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 30s
+      test:
+        [
+          "CMD",
+          "kafka-topics",
+          "--bootstrap-server",
+          "localhost:9092",
+          "--list",
+        ]
+      interval: 10s
       timeout: 10s
-      retries: 5
-    restart: unless-stopped
+      retries: 10
+    restart: "no"
 
   backend:
     build:
@@ -89,7 +95,7 @@ services:
       redis:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "5000:5000"
     environment:
@@ -111,7 +117,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    restart: unless-stopped
+    restart: "no"
 
   frontend:
     build:
@@ -127,4 +133,4 @@ services:
       - backend
     networks:
       - doubt_network
-    restart: unless-stopped
+    restart: "no"
